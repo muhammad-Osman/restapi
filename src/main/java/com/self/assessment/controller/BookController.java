@@ -1,11 +1,13 @@
 package com.self.assessment.controller;
 
+import com.self.assessment.dao.BookDao;
+import com.self.assessment.dto.BookPagination;
 import com.self.assessment.dto.Post;
 import com.self.assessment.model.Book;
 import com.self.assessment.service.BookService;
-import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
@@ -23,18 +25,15 @@ public class BookController {
     }
 
     @PostMapping("/add")
-    public ResponseEntity<Book> createBook(@RequestBody Book book) {
-
-        Book newBook = bookService.saveBook(book);
-        System.out.println("\n\n " + newBook + "\n\n");
-        return ResponseEntity.ok(newBook);
+    public ResponseEntity<String> createBook(@RequestBody BookDao book) {
+        String newBook = bookService.saveBook(book);
+        return new ResponseEntity<>(newBook, HttpStatus.CREATED);
     }
 
     @GetMapping
-    public ResponseEntity<Page<Book>> getBooksWithPagination(@RequestParam(defaultValue = "0") int page,
-                                                             @RequestParam(defaultValue = "10") int size) {
-        Page<Book> books = bookService.getAllBooks(PageRequest.of(page, size));
-        return ResponseEntity.ok(books);
+    public ResponseEntity<BookPagination> getBooksWithPagination(@RequestParam(defaultValue = "0") int page,
+                                                                       @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(bookService.bookList(page, size));
     }
 
     @GetMapping("/thirdparty")

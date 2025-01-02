@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.util.ContentCachingRequestWrapper;
 import org.springframework.web.util.ContentCachingResponseWrapper;
 
 import java.io.IOException;
@@ -21,18 +22,19 @@ public class LoggingFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        // Log incoming request
-        String requestData = new String(request.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        log.info("REQUEST: {} {}", request.getMethod(), requestData);
+        ContentCachingRequestWrapper cachedRequest = new ContentCachingRequestWrapper(request);
+        ContentCachingResponseWrapper cachedResponse = new ContentCachingResponseWrapper(response);
 
-        // Wrap response to capture output
-        ContentCachingResponseWrapper responseWrapper = new ContentCachingResponseWrapper(response);
-        filterChain.doFilter(request, responseWrapper);
+        filterChain.doFilter(cachedRequest, cachedResponse);
 
-        // Log outgoing response
-        String responseData = new String(responseWrapper.getContentAsByteArray(), StandardCharsets.UTF_8);
-        log.info("RESPONSE: {}", responseData);
+        // Log request body
+        String requestBody = new String(cachedRequest.getContentAsByteArray(), StandardCharsets.UTF_8);
+        log.info("REQUEST: {} {}", cachedRequest.getMethod(), requestBody);
 
-        responseWrapper.copyBodyToResponse();
+        // Log response body
+        String responseBody = new String(cachedResponse.getContentAsByteArray(), StandardCharsets.UTF_8);
+        log.info("RESPONSE: {}", responseBody);
+
+        cachedResponse.copyBodyToResponse();
     }
 }
